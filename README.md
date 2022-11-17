@@ -1,4 +1,3 @@
-[![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-c66648af7eb3fe8bc4f294546bfd86ef473780cde1dea487d3c4ff354943c9ae.svg)](https://classroom.github.com/online_ide?assignment_repo_id=9252360&assignment_repo_type=AssignmentRepo)
 # A hidden Markov model gene-finder
 
 In the exercise below, you will implement and experiment with an example of how to apply a HMM for identifying coding regions(genes) in genetic material. We consider only procaryotes, which have a particular simple gene format. A gene is a sequence of triplets, codons, that encode proteins. We saw this in the first project. Now, we assume that we have a genomic sequence, and our goal is to recognise which part of the genome encodes genes, and which do not.
@@ -85,7 +84,7 @@ The genomic sequence is a sequence over the letters:
 print(set(genome1['genome']))
 ```
 
-    {'C', 'A', 'G', 'T'}
+    {'G', 'T', 'C', 'A'}
 
 
 while the annotation is a sequence over the letters
@@ -95,7 +94,7 @@ while the annotation is a sequence over the letters
 print(set(genome1['annotation']))
 ```
 
-    {'C', 'N', 'R'}
+    {'N', 'R', 'C'}
 
 
 that should be interpreted as non-coding, reverse-coding, and coding.
@@ -154,26 +153,26 @@ assert x == rev_observed_states(y)
 # In the figure above, the states map as C -> 0, N -> 1 and R -> 2 but
 # you do not need to use that; but you do need to be consistent everywhere
 def hidden_states(x: str) -> list[int]:
-    """
-    Map a genome annotation to hidden states (index 0, 1, or 2).
-    
-    >>> hidden_states('NNCCCCCCNNRRRRRRN')
-    [1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 1]
-    """
-    map = {'C': 0, 'N': 1, 'R': 2}
-    return [map[a] for a in x]
+	"""
+	Map a genome annotation to hidden states (index 0, 1, or 2).
+	
+	>>> hidden_states('NNCCCCCCNNRRRRRRN')
+	[1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 1]
+	"""
+	map = {'N': 1, 'C': 0, 'R': 2}
+	return [map[a] for a in x]
 
 def rev_hidden_states(hid: list[int]) -> str:
-    """
-    Reverse the map of hidden states.
-    
-    This function should also be useful if you wish to convert a decoding
-    to the annotation format at some point in the future.
-    
-    >>> rev_hidden_states([1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 1])
-    'NNCCCCCCNNRRRRRRN'
-    """
-    return ''.join("CNR"[h] for h in hid)
+	"""
+	Reverse the map of hidden states.
+	
+	This function should also be useful if you wish to convert a decoding
+	to the annotation format at some point in the future.
+	
+	>>> rev_hidden_states([1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 2, 2, 2, 1])
+	'NNCCCCCCNNRRRRRRN'
+	"""
+	return ''.join('CNR'[x] for x in hid) 
 
 ```
 
@@ -225,37 +224,42 @@ I don't really care how you do it, but I want it done. Write me a function that 
 # In the figure above, the states map as C -> 0/1/2, N -> 3 and R -> 4/5/6 but
 # you do not need to use that; but you do need to be consistent everywhere
 def hidden_states7(x: str) -> list[int]:
-    """
-    Map a genome annotation to hidden states.
-    
-    >>> hidden_states7('NNCCCCCCNNRRRRRRN')
-    [3, 3, 0, 1, 2, 0, 1, 2, 3, 3, 4, 5, 6, 4, 5, 6, 3]
-    """
-    ann = [-1] * len(x)
-    for i, a in enumerate(x):
-        match a:
-            case 'N': ann[i] = 3
-            case 'C' if x[i - 1] != 'C':
-                ann[i] = 0
-            case 'C' if x[i - 1] == 'C':
-                ann[i] = (ann[i - 1] + 1) % 3
-            case 'R' if x[i - 1] != 'R':
-                ann[i] = 4
-            case 'R' if x[i - 1] == 'R':
-                ann[i] = (ann[i - 1] -4 + 1) % 3 + 4
-    return ann
+	"""
+	Map a genome annotation to hidden states.
+	
+	>>> hidden_states7('NNCCCCCCNNRRRRRRN')
+	[3, 3, 0, 1, 2, 0, 1, 2, 3, 3, 4, 5, 6, 4, 5, 6, 3]
+	"""
+	hiddenstates=[]
+	for i,a in enumerate(x):
+		if x[i] =="N":
+			hiddenstates.append(3)
+		if x[i] == 'C' and x[i-1] != 'C':
+			hiddenstates.append(0)
+		if x[i] == 'C' and x[i-1] == 'C':
+			hiddenstates.append((hiddenstates[i-1] + 1) % 3)
+		if x[i] == 'R' and x[i-1] != 'R':
+			hiddenstates.append(4)
+		if x[i] == 'R' and x[i-1] == 'R':
+			if (hiddenstates[i-1] + 1) % 3 == 0:
+				hiddenstates.append(6)
+			else:
+				hiddenstates.append(((hiddenstates[i-1] + 1) % 3)+3)
+
+	return hiddenstates
 
 def rev_hidden_states7(hid: list[int]) -> str:
-    """
-    Reverse the map of hidden states.
-    
-    This function should also be useful if you wish to convert a decoding
-    to the annotation format at some point in the future.
-    
-    >>> rev_hidden_states7([3, 3, 0, 1, 2, 0, 1, 2, 3, 3, 4, 5, 6, 4, 5, 6, 3])
-    'NNCCCCCCNNRRRRRRN'
-    """
-    return ''.join("CCCNRRR"[h] for h in hid)
+	"""
+	Reverse the map of hidden states.
+	
+	This function should also be useful if you wish to convert a decoding
+	to the annotation format at some point in the future.
+	
+	>>> rev_hidden_states7([3, 3, 0, 1, 2, 0, 1, 2, 3, 3, 4, 5, 6, 4, 5, 6, 3])
+	'NNCCCCCCNNRRRRRRN'
+	"""
+	map={0:"C",1:"C",2:"C",3:"N",4:"R",5:"R",6:"R"}
+	return ''.join(map[a] for a in hid)
 
 ```
 
@@ -398,15 +402,15 @@ def lik(data: HMMData, theta: HMMParam) -> float:
     """
     Compute the likelihood of the data (obs,hid) given the parameters, theta.
     """
-    k1, x, z = data
-    k2, pi, T, E = theta
+    k1, x, z = data #k1 er modellen (3 eller 7) x er den observerede state (obs) og z er den observerede hidden state (hid)
+    k2, pi, T, E = theta #k2 er modellen (3 eller 7, skal være ens med k1), pi er sandsynligheden for initial hidden state, T er sandsynligheden for transition, og E er sandsynligheden for emission
     assert k1 == k2
     
     # FIXME: compute the likelihood
     p = pi[z[0]]
-    for i, s in enumerate(z[1:]):
-        p *= T[z[i], s]
-    for i, _ in enumerate(z):
+    for i in range(len(z)-1):
+        p *= T[z[i], z[i+1]]
+    for i in range(len(z)):
         p *= E[z[i], x[i]]
     return p
 
@@ -418,6 +422,7 @@ def lik(data: HMMData, theta: HMMParam) -> float:
 assert_almost_equal(lik(hmm_data(3, 'A', 'N'), theta), 0.5)
 assert_almost_equal(lik(hmm_data(3, 'AC', 'NC'), theta), 0.01)
 assert_almost_equal(lik(hmm_data(3, 'ACGTTCGA', 'NCCCNRRR'), theta), 7.86432e-09)
+
 
 ```
 
@@ -453,9 +458,9 @@ def log_lik(data: HMMData, theta: HMMParam) -> float:
 
     # FIXME: compute the log likelihood
     p = pi[z[0]]
-    for i, s in enumerate(z[1:]):
-        p += T[z[i], s]
-    for i, _ in enumerate(z):
+    for i in range(len(z)-1):
+        p += T[z[i], z[i+1]]
+    for i in range(len(z)):
         p += E[z[i], x[i]]
     return p
 
@@ -515,8 +520,8 @@ def count_emissions(data: HMMData) -> ArrayLike:
     k, obs, hid = data
     counts = np.zeros((k, 4))  # How often each of the k states emit A,C,G,T.
     # FIXME: count the emissions
-    for x, z in zip(obs, hid):
-        counts[z, x] += 1
+    for i,y in zip(obs,hid):
+        counts[y,i] +=1
     return counts
 ```
 
@@ -544,8 +549,8 @@ def count_transitions(data: HMMData) -> ArrayLike:
     k, _, z = data
     counts = np.zeros((k, k))  # How often each of the k*k state transitions
     # FIXME: count the transitions
-    for i in range(len(z) - 1):
-        counts[z[i], z[i+1]] += 1
+    for i in range(1,len(z)):
+        counts[z[i-1], z[i]] +=1
     return counts
 ```
 
@@ -662,24 +667,18 @@ Now, all you have to do is implement the Viterbi algorithm in the function below
 
 ```python
 def viterbi(x: list[int], theta: HMMParam) -> ArrayLike:
-    """Compute the K x len(x) Viterbi table (in log-space)."""
-    K, pi, T, E = theta
-    N = len(x)
-    V = np.empty((K, N))
-    # FIXME: fill in V
-    pi, T, E = log_each(pi), log_each(T), log_each(E)
-    # If you know more about numpy, you can do this much more efficiently,
-    # but this is the fundamental algorithm, so it is good to know how to
-    # implement it with the basic tools any language has.
-    for k in range(K):
-        V[k,0] = pi[k] + E[k,x[0]]
-    for i in range(1, len(x)):
-        for k in range(K):
-            V[k,i] = E[k,x[i]] + max(
-                V[kk, i-1] + T[kk, k]
-                for kk in range(K)
-            )
-    return V
+	"""Compute the K x len(x) Viterbi table (in log-space)."""
+	K, pi, T, E = theta
+	N = len(x)
+	V = np.empty((K, N))
+	# FIXME: fill in V
+	pi, T, E = log_each(pi), log_each(T), log_each(E)
+	for i in range(K):
+		V[i,0] = pi[i] + E[i, x[0]]
+	for l in range(1, N):
+		for i in range(K):
+			V[i,l] = E[i, x[l]] + np.max(V[:, l-1] + T[:, i])  #det er det her vi ikke fatter, præcist det med max, fordi det han skriver max_{} ved vi ikke helt hovrdan skal tolkes
+	return V
 
 ```
 
@@ -754,11 +753,7 @@ def backtrack(x: list[int], V: ArrayLike, theta: HMMParam) -> list[int]:
     z[-1] = argmax(V[s,-1] for s in range(K))
     # FIXME: compute the rest of the hidden sequence
     for i in range(1, len(x)):
-        # previous state is z[-i] and we want the one that lead to it
-        z[-(i+1)] = select(
-            ((V[s, -(i+1)] + T[s,z[-i]] + E[z[-i],x[-i]]) for s in range(K)), 
-            V[z[-i],-i]
-        )
+        z[-(i+1)] = select(((V[s, -(i+1)] + T[s,z[-i]] + E[z[-i], x[-i]]) for s in range(K)), V[z[-i],-i])
     return z
 
 ```
@@ -864,10 +859,37 @@ Anyway, there are plenty of other classes that will teach you about such data sc
 
 
 ```python
-# Decode genome 1 with model/param 1_7
 decoded_1_17 = decode(genome1['genome'], theta1_7)
+decoded_1_27 = decode(genome1['genome'], theta2_7)
+decoded_2_17 = decode(genome2['genome'], theta1_7)
+decoded_2_27 = decode(genome2['genome'], theta2_7)
+```
+
+
+```python
+print("How do we do for genome 1 with the two estimates?")
+print(f"HMM-7, data1 | theta1, accuracy: {100.0 * accuracy(genome1['annotation'], decoded_1_17):.2f}%")
+print(f"HMM-7, data1 | theta2, accuracy: {100.0 * accuracy(genome1['annotation'], decoded_1_27):.2f}%")
+print()
+
+print("How do we do for genome 2 with the two estimates?")
+print(f"HMM-7, data2 | theta1, accuracy: {100.0 * accuracy(genome2['annotation'], decoded_2_17):.2f}%")
+print(f"HMM-7, data2 | theta2, accuracy: {100.0 * accuracy(genome2['annotation'], decoded_2_27):.2f}%")
 
 ```
+
+    How do we do for genome 1 with the two estimates?
+    HMM-7, data1 | theta1, accuracy: 40.10%
+    HMM-7, data1 | theta2, accuracy: 40.21%
+    
+    How do we do for genome 2 with the two estimates?
+    HMM-7, data2 | theta1, accuracy: 37.99%
+    HMM-7, data2 | theta2, accuracy: 38.01%
+
+
+Don't expect a great leap here. The model is still too simple. But it should improve upon the three state model. A general rule of thumb is that the more complex a model is, the better you can predict on data that you have used to fit the parameters, but if the model gets too complex, the same model will do worse on other data sets. We won't see this here, though. A seven state HMM is not a complex model when it comes to analysing a full genome, even if it is bacterial.
+
+If you feel up to it, you are welcome to try to build a more complex HMM. Would it get better if you included start and stop codons? If the distribution of nucleotides in coding regions to codon position into account? You have all you need to explore this, you just need to update the models as specified in the three vectors/matrices.
 
 ## Testing
 
